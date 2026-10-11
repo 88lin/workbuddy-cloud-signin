@@ -33,21 +33,26 @@ python3 /workspace/workbuddy-auto-signin/signin.py doctor   # 报 NO_AUTH 就继
 
 ## 流程
 
-### 1. 取脚本
+### 1. 取脚本（两个仓库）
 
 ```bash
 git clone https://gh-proxy.com/https://github.com/88lin/workbuddy-auto-signin.git /workspace/workbuddy-auto-signin
+git clone https://gh-proxy.com/https://github.com/88lin/workbuddy-cloud-signin.git /workspace/workbuddy-cloud-signin
 ```
+
+第二个仓库提供登录脚本。**必须走现成脚本，不要让 AI 自己写 pty 脚本**——
+坑位 1–5 全在里面，现场写必然重蹈覆辙。
 
 ### 2. 拿登录凭据（核心）
 
 云端沙箱的登录态是平台用 `ACC_PRODUCT_CONFIG_V2/V3`（`type=custom-token`）注入的，
 CLI 走注入模式，**不会把凭据写成文件**，所以脚本报 `NO_AUTH`。
 
-要把注入摘掉、让 CLI 退回 `cli-external-link` 流程（生成登录 URL → 浏览器授权 → 写凭据文件）：
+脚本会把注入摘掉、让 CLI 退回 `cli-external-link` 流程
+（生成登录 URL → 微信授权 → 写凭据文件）：
 
 ```bash
-python3 scripts/cli_login.py --wait 1500
+python3 /workspace/workbuddy-cloud-signin/scripts/cli_login.py --wait 1500 --cwd /workspace/workbuddy-auto-signin
 ```
 
 常用参数：`--wait` 等待秒数（默认 1500）、`--cwd` 仓库目录（必须已存在）、
