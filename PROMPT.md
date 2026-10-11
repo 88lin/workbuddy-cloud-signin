@@ -13,21 +13,22 @@ which codebuddy; python3 --version; git --version
 
 三个都得有。缺 `codebuddy` 就跑不了第 2 步的登录流程，直接告诉我，我换别的办法给你凭据。
 
-**1. 取脚本**
+**1. 克隆两个仓库（都要，各有用处）**
 
 ```
 git clone https://gh-proxy.com/https://github.com/88lin/workbuddy-auto-signin.git /workspace/workbuddy-auto-signin
+git clone https://gh-proxy.com/https://github.com/88lin/workbuddy-cloud-signin.git /workspace/workbuddy-cloud-signin
 ```
 
-**2. 拿登录凭据（关键，别跳步）**
+**2. 拿登录凭据 —— 直接跑现成脚本，不要自己写**
 
-这台机器的登录态是平台注入的，CLI 不会写凭据文件，所以脚本会报 `NO_AUTH`。必须让 CLI 走浏览器授权流程：
+```
+python3 /workspace/workbuddy-cloud-signin/scripts/cli_login.py --wait 1500 --cwd /workspace/workbuddy-auto-signin
+```
 
-- 用 Python 的 `pty` 模块在伪终端里启动 `codebuddy`（**不能用 `-p` 模式**，那样 `/login` 不生效）
-- 启动前 unset 这几个环境变量：`ACC_PRODUCT_CONFIG_V2`、`ACC_PRODUCT_CONFIG_V3`、`X_IDE_AUTH_PROXY`、`IDE_EDITOR_SERVER_AUTH_TYPE`
-- 伪终端窗口设成 250 列，否则登录链接会被折行截断，拿到的是半截
-- 按键一律用 `\r`（**不是 `\n`**），**按屏幕出现的文字触发**，别用写死的秒数：看到「trust the files」发 `\r` 确认信任 → 接着发 `/login\r` → 看到「Select login method」再发 `\r` 选「中国站」
-- 从输出里正则提取完整的 `https://copilot.tencent.com/login?...` 链接发给我
+脚本已处理好伪终端、注入变量、按键时序这些坑，别自己造轮子。它会打印
+`LOGIN_URL=https://copilot.tencent.com/login?...` 这样一行，把链接原样发给我；
+若打印 `ERROR=...`，把原因告诉我。
 - **把这个链接发到微信聊天框，再从微信里点开登录**。已实测：系统浏览器打开会被劫持跳到 WorkBuddy 小程序、授权中断；从微信点开才能走完（2 分 38 秒落地）。登录途中跳小程序是正常的，走完即可
 - 进程保持运行等我授权，轮询 `~/.local/share/CodeBuddyExtension/Data/Public/auth/Tencent-Cloud.coding-copilot.info` 是否生成
 - 判断依据：CLI 显示 `Waiting for auth... (Press ESC to cancel)` 是正常等待，不是卡死；只有授权真完成才会生成凭据文件
